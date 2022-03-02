@@ -3,8 +3,9 @@ import time
 from scipy.optimize import check_grad
 import os
 
-path = os.path.dirname(os.getcwd())
+path = os.getcwd()
 
+#returns trained model parameters
 def load_model_txt(filename):
     w_t = []
     with open(filename, 'r') as f:
@@ -13,6 +14,7 @@ def load_model_txt(filename):
 
     return np.array(w_t)
 
+#matricizes W and T
 def extract_W_T(w_t_list):
     W = np.zeros((26, 128))
     T = np.zeros((26, 26))
@@ -249,8 +251,8 @@ def decode_crf(X, w, t):
     return y_pred
 
 
-def crf_test(model, X_test, y_test,model_name):
-    print("Function value: ", crf_obj(model, X_test, y_test, C=1000))
+def crf_test(model, X_test, y_test,model_name, C):
+    print("Function value: ", crf_obj(model, X_test, y_test, C))
 
     ''' accuracy '''
 
@@ -276,3 +278,85 @@ def crf_test(model, X_test, y_test,model_name):
     print("Test accuracy : ",accuracy)
 
     return accuracy
+
+#function for evaluation of linear SVM performance
+def linear_SVM_performance(y_target, y_predicted, target_ids):
+    target_words, predicted_words = [], []
+    lastWord = -1000
+    character_truepositives, word_truepositives = 0, 0
+
+    for i, (target, predicted) in enumerate(zip(y_target, y_predicted)):
+        target_word = int(target_ids[i])
+
+        if target_word == lastWord:
+            target_words[-1].append(target)
+            predicted_words[-1].append(predicted)
+        else:
+            target_words.append([target])
+            predicted_words.append([predicted])
+            lastWord = target_word
+
+
+    for target_character,predicted_character in zip(y_target, y_predicted):
+        if target_character == predicted_character:
+            character_truepositives += 1
+
+    Character_Accuracy = float(character_truepositives)/float(y_target.shape[0])
+
+    for target_word,predicted_word in zip(target_words, predicted_words):
+        if np.array_equal(target_word, predicted_word):
+            word_truepositives += 1
+
+    word_Accuracy = float(word_truepositives)/float(len(target_words))
+
+    print("Letter-wise prediction Accuracy: %0.3f" %(Character_Accuracy))
+    print("Word-wise prediction Accuracy: %0.3f" %(word_Accuracy))
+
+    return Character_Accuracy, word_Accuracy
+
+
+#function for evaluation of Structured SVM performance
+def structuredSVM_performance(file_target, file_predicted):
+
+    with open(file_target, 'r') as file_target, open(file_predicted, 'r') as file_predicted:
+        target_words, predicted_words, target_characters, predicted_characters = [], [], [], []
+
+        lastWord = -1000
+        character_truepositives, word_truepositives = 0, 0
+
+        for target, predicted in zip(file_target, file_predicted):
+            targets = target.split()
+            target_character = int(targets[0])
+            target_characters.append(target_character)
+
+            predicted_character = int(predicted)
+
+            if hasattr(predicted_character, 'len') > 0:
+                predicted_character = predicted_character[0]
+
+            predicted_characters.append(predicted_character)
+            target_Word = int(targets[1][4:])
+
+            if target_Word == lastWord:
+                target_words[-1].append(target_character)
+                predicted_words[-1].append(predicted_character)
+            else:
+                target_words.append([target_character])
+                predicted_words.append([predicted_character])
+                lastWord = target_Word
+
+        for target_character, predicted_character in zip(target_characters, predicted_characters):
+            if target_character == predicted_character:
+                character_truepositives += 1
+
+        for target_Word, pred_word in zip(target_words, predicted_words):
+            if np.array_equal(target_Word, pred_word):
+                word_truepositives += 1
+
+        character_accuracy = float(character_truepositives) / float(len(target_characters))
+        word_accuracy = float(word_truepositives) / float(len(target_words))
+
+        print("Character level accuracy : %0.3f" % (character_accuracy))
+        print("Word level accuracy : %0.3f" % (word_accuracy))
+
+        return character_accuracy, word_accuracy

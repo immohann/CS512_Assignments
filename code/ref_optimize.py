@@ -1,12 +1,17 @@
 # Imports
 import numpy as np
 import os
+from subprocess import run, PIPE
+import matplotlib.pyplot as plt
+from sklearn.svm import LinearSVC
+import pickle
 
 import scipy.optimize as opt
-from read_data import read_for_crf, prepare_structured_dataset
+from read_data import read_for_crf, prepare_structured_dataset, crf_dataLoader, linearSVM_dataLoader, get_Words, get_Characters
 from all_functions import *
 
-path = os.path.dirname(os.getcwd())
+fmin_tnc_results = {}
+path = os.getcwd()
 
 #for 2a   #Train data to calculate the gradient on
 X_gradient_compute, y_gradient_compute = read_for_crf(path + "/data/train.txt")
@@ -50,21 +55,23 @@ def ref_optimize(x0, X_train, y_train,X_test, y_test , c, model_name):
     print("Optimizing parameters. This will take a long time (at least 1 hour per model).")
 
     start = time.time()
-    result = opt.fmin_tnc(crf_obj, x0, crf_obj_gradient, (X_train, y_train, c), disp=1)[0]
+    result = opt.fmin_tnc(crf_obj, x0, crf_obj_gradient, (X_train, y_train, c), disp=1)
     print("Total time: ", end='')
     print(time.time() - start)
 
     model = result[0]
-
-    accuracy = crf_test(model, X_test, y_test, model_name)
+    fmin_tnc_results[c] = model
+    accuracy = crf_test(model, X_test, y_test, model_name, c)
     print('CRF test accuracy for c = {}: {}'.format(c, accuracy))
     return accuracy
 
 #2a
-gradient_compute(X_gradient_compute, y_gradient_compute,W_T_matrix)
-#2b
-ref_optimize(W_T_matrix, X_train, y_train,X_test, y_test , c=1000, model_name='new')
+if __name__ == '__main__':
+    gradient_compute(X_gradient_compute, y_gradient_compute,W_T_matrix)
 
+#2b
+    for c in [1,10,100,1000]:
+        ref_optimize(W_T_matrix, X_train, y_train,X_test, y_test , c=c, model_name='c_equal_'+ str(c))
 
 
     
