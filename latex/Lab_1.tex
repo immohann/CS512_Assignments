@@ -1,6 +1,6 @@
 \documentclass[11pt]{report}
 \usepackage{./assignment_programming}
-\usepackage{slashbox}
+% \usepackage{slashbox}
 \usepackage{enumerate}
 \usepackage[shortlabels]{enumitem}
 \usepackage{stmaryrd}
@@ -11,7 +11,7 @@
 \usepackage{subfigure}
 %\PassOptionsToPackage{normalem}{ulem}
 %\usepackage{ulem}
-
+\usepackage{float}
 \input{./Definitions}
 
 %\providecommand{\tabularnewline}{\\}
@@ -30,12 +30,16 @@
 
 
 % Fill in your name and email address
-\stuinfo{Your Name}{netid@uic.edu}
+\stuinfo{Nikita Thakur}{nthaku3@uic.edu}
+
+
 \graphicspath{{./}{./Figures/}}
 
 \begin{document}
 
+
 \maketitle
+Harsh Mishra (hmishr3@uic.edu), Amrit Raj Vardhan (avardh5@uic.edu), Karan Jogi (kjogi2@uic.edu), Manmohan Dogra (mdogra3@uic.edu), Nikita Thakur (nthaku3@uic.edu)
 
 {\bf Deadline: 4 PM, Feb 23, 2022}
 
@@ -230,11 +234,27 @@ Given these parameters (\eg\ by learning from data), the model \eqref{eq:crf} ca
 	Show your derivation step by step.
 	
 	Now derive the similar expression for $\grad_{T_{ij}} \log p(\yvec^t|X^t)$.
+	\\ \\
+	{\bf [Answers.1 a)]} 
+	\begin{figure}[H]
+    \includegraphics[width=16cm]{Figures/1a.jpeg}
+    \centering
+    \end{figure}
+    \begin{figure}[H]
+    \includegraphics[width=13cm]{Figures/1aa.jpeg}
+    \centering
+    \end{figure}
 	
 	\item[(1b)] {\bf [5 Marks]} A feature is a function that depends on $X$ and $\yvec$, but not $p(\yvec|X)$. Show that the gradient of $\log Z_X$ with respect to $\wvec_c$ and $T$ is exactly the expectation of some features with respect to $p(\yvec | X)$, and what are the features? Include your derivation.
 	
 	Hint: $T_{y_s, y_{s+1}} = \sum_{p \in \Ycal, q \in \Ycal} T_{pq} \cdot \llbracket (y_s, y_{s+1}) = (p,q)  \rrbracket$.
 	
+	{\bf [Answers.1 b)]} 
+	\begin{figure}[H]
+    \includegraphics[width=14cm]{Figures/1b.jpeg}
+    \centering
+    \end{figure}
+    
 	\item[(1c)] {\bf [12 Marks]} Implement the decoder \eqref{eq:crf_decode} with computational cost $O(m|\Ycal|^2)$.
 	You may use the max-sum algorithm introduced in the course, or any simplified dynamic programming method that is customized to the simple sequence structure (see Appendix \ref{sec:MAP_formula}). 
 	To keep it simple, you do not need to implement a full-fledged message passing algorithm.
@@ -265,6 +285,10 @@ Given these parameters (\eg\ by learning from data), the model \eqref{eq:crf} ca
 	In your report, provide the maximum objective value $\sum_{s=1}^m \inner{\wvec_{y_s}}{\xvec_s} + \sum_{s=1}^{m-1} T_{y_s, y_{s+1}}$ for this test case.
 	If you are using your own dynamic programming algorithm (\ie\ not max-sum),
 	give a brief description especially the formula of recursion.
+
+	\\{\bf [Answers.1 c)]} 
+	
+    The maximum objective value obtained = 199.417
 \end{itemize}
 
 %\newpage
@@ -337,7 +361,10 @@ Here $C > 0$ is a trade-off weight that balances log-likelihood and regularizati
 	it takes 5 seconds to compute the gradient on the whole training set.
 	Single core of Intel(R) i7-10510U CPU @ 1.80GHz.
 	
-	
+    {\bf [Answers. 2 a)]} 
+	 \begin{itemize}
+        \item $\frac{1}{n} \sum_{i=1}^n \log p(\yvec^t | X^t) = -31.790005021589167 $
+    \end{itemize}
 	\item[(2b)] {\bf [12 Marks]} We can now learn ($\{\wvec_c\}, T$) by solving the optimization problem in \eqref{eq:obj_MLE} based on the training examples in \verb#data/train.txt#.
 	Set $C = 1000$.
 	Typical off-the-shelf solvers rely on a routine which, given as input a feasible value of the optimization variables ($\wvec_c, T$), returns the objective value and gradient evaluated at that ($\wvec_c, T$). This routine is now ready from the above task,
@@ -363,7 +390,18 @@ Here $C > 0$ is a trade-off weight that balances log-likelihood and regularizati
 		with each line having one integer in $\{1,\ldots, 26\}$ that represents the predicted label of a letter, in the same order as it appears in \verb#data/test.txt#.
 	\end{itemize}
 	In your report, provide the optimal objective value of \eqref{eq:obj_MLE} found by your solver.
+    
+    {\bf [Answers. 2 b)]} 
+    \begin{itemize}[-]
+        \item Optimal objective value = 3701.1579986543393
+        \item Gradient check (first 10 characters) : 1.2533489985717134e-05
+        \item Total time: 5.273620128631592
+        \item Word-wise test accuracy: 0.562 (56.2\%)
+        \item Char-wise test accuracy: 0.875 (87.5\%)
+    \end{itemize}
+
 \end{itemize}
+
 
 
 \section{Benchmarking with Other Learning Models}
@@ -425,14 +463,56 @@ The meaning of the fields in each line is described in \verb#data/fields_struct.
 	
 	What observation can be made on the result?
 	
+	{\bf [Answers. 3 a)]} 
+	\begin{itemize}
+	    \item 
+	    	\begin{figure}[H]
+            	\centering
+            	\subfigure[CRF Character-wise accuracy]{
+            		\includegraphics[width=5cm]{Figures/CRF-char-accuracy.png}}
+            	\subfigure[SVM-HMM Character-wise accuracy]{
+            		\includegraphics[width=5cm]{Figures/svmhmm-char_accuracy.png}}
+            	\subfigure[Linear-HMM Character-wise accuracy]{
+            		\includegraphics[width=5cm]{Figures/linear_svm_char-accuracy.png}}
+            	\caption{Comparison of CRF, SVM-HMM, and Linear-SVM character-wise accuracy}
+            	\label{fig:compare_optimizer}
+            \end{figure}
+	\end{itemize}
+	
+    {\bf [Observations:]}
+	
+	We tested the model by using values of C varying from 1e-0 to 1e+3. Clearly, the accuracy is much lower at C=1, which increases gradually with C. It can be observed that for the CRF model tends to learn at a grater rate for c ranging from 0 to 10 and then saturates near c=1000, SVM-HMM tends to learn at a grater rate for c ranging from 0 to 100 and then saturates near c=1000 and SVM-MC tends to learn at a grater rate for c ranging from 0 to 10 and then saturates near c=1000. As the value of C increases, the model fits the data better to obtain better test time for word and character level accuracy. 
+	
 	\item[(3b)] {\bf [5 Marks]} Produce another three plots for word-wise prediction accuracy on test data.  What observation can be made on the result?
 	%Note in SVM-MC, we used the trick of treating each letter as a word. Therefore some conversion is needed to compute the word-wise accuracy. So another file \verb#data/test_index.txt# is provided.  Each line of it corresponds to a letter in the test set, and it has the same number of lines as \verb#test_mc.txt#.  Each line has a single integer which is the word-id from the original data.  So two lines with the same integer means their corresponding letters belong to the same word.
+    	
+    	
+    {\bf [Answers. 3 b)]} 
+	\begin{itemize}
+	    \item 
+	    	\begin{figure}[H]
+            	\centering
+            	\subfigure[CRF word-wise accuracy]{
+            	\includegraphics[width=5cm]{Figures/CRF-word-accuracy.png}}
+            	\subfigure[SVM-HMM word-wise accuracy]{
+            	\includegraphics[width=5cm]{Figures/svmhmm-word-accuracy.png}}
+            	\subfigure[SVM-MC word-wise accuracy]{
+            	\includegraphics[width=5cm]{Figures/linear-svm-word-accuracy.png}}
+            	\caption{Comparison of CRF, SVM-HMM, and SVM-MC word-wise accuracy}
+            	\label{fig:compare_optimizer}
+            \end{figure}
+	\end{itemize}
+	
+	{\bf [Observations:]}
+	
+	We tested the model by using values of C varying from 1e-0 to 1e+3. Clearly, the accuracy is much lower at C=1, which increases gradually with C. It's being observed that for all three graphs CRF, SVM-MM and Linear-SVM, as the value of C increases, the model fits the data better to obtain better test time for word and character level accuracy.
+	
 \end{itemize}
 
 
 \section{Stochastic Optimization}
 
-\begin{figure}[t]
+\begin{figure}[!b]
 	\centering
 	\subfigure[Training objective v.s. effective pass]{
 		\includegraphics[width=6cm]{obj_compare}}
@@ -486,6 +566,26 @@ For this section, you should fix the value of $C$ in the CRF to the best value f
 	Tune them well for all the methods respectively before plotting.
 	You can tune them based on how fast the training objective decays.
 	%
+	
+	
+	{\bf [Answers. 4 a)]} 
+	\begin{itemize}
+	    \item 
+	    	\begin{figure}[H]
+            	\centering
+            	\subfigure[]{
+        	    \includegraphics[width=7.5cm]{Figures/word_error_vs_numpasses.png}}
+            	\subfigure[]{
+        		\includegraphics[width=7.5cm]{Figures/obj_val_vs_numpasses.png}}
+                \caption{Test error(a) and train objective(b) values per number of passes. }
+            	\label{fig:compare_optimizer}
+            \end{figure}
+            The word-wise test error and training objective values can be found in the 
+            
+            "result/4a\_output\_for\_plot" folder.
+	\end{itemize}
+	
+	
 	\item[(4b)] {\bf [8 Marks]} 
 	Since the dynamic programming based gradient computation can still be expensive,
 	an alternative is to evaluate the gradient by sampling,
@@ -543,6 +643,30 @@ For this section, you should fix the value of $C$ in the CRF to the best value f
 	\textbf{Hint}: You do not need to use a large number of samples.  $S=10$ or even 5 might work.
 	
 	\textbf{How to debug your sampler?} The easiest way is to take an arbitrary word, and compute the node and edge marginal distributions based on samples.  Then compare them with the result of dynamic programming.  The difference should decay to 0 as $S$ grows.
+	    	
+    {\bf [Answers. 4 b)]} 
+	\begin{itemize}[i)]
+	    \item Since, we have a linear Markov chain, hence by using Markov's blanket, we get: 
+	    
+	    $p(y_k|\ldots, y_{k-3}, y_{k-1}, y_{k+1}, y_{k+3}, \ldots, X)$ = $p(y_k| y_{k--}, y_{k+1})$
+	    
+	    = $exp(\phi X_k^T W_{y_k}+T_{k,k+1}+T_{k,k-1})$
+	    
+	    	\begin{figure}[H]
+            	\centering
+            	\subfigure[]{
+            	\includegraphics[width=7.5cm]{Figures/MCMC_1.png}}
+            	\subfigure[]{
+            	\includegraphics[width=7.5cm]{Figures/MCMC_2.png}}
+            	\caption{(a)Training objective as per number of effective passes and (b) test word-wise error as per number of effictive passes}
+            	\label{fig:compare_optimizer}
+            \end{figure}
+	\end{itemize}
+	
+	{\bf [Observations:]}
+	
+	Clearly, with MCMC gradients introduced noise, LBFGS had the least effect compared to momentum, and SGD was affected the most. The effect of noise on SGD, and momentum was not trivial. With increase in the value of s (number of samples) the performance of the model increases with reduced noise. We performed the experiment using s = 10. 
+	
 	
 	\item[(4c)] {\bf [8 Marks]} 
 	Rao-Blackwellization. 
@@ -588,6 +712,14 @@ For this section, you should fix the value of $C$ in the CRF to the best value f
 	What observation can be made?
 \end{itemize}
 
+  {\bf [Answers. 4 c)]} 
+	\begin{itemize}
+	    \item 
+	    	\begin{figure}[H]
+            	\centering
+            \includegraphics[width=15cm]{Figures/Rao_blackw.pdf}
+            	\end{figure}
+	\end{itemize}
 
 
 
@@ -641,9 +773,49 @@ All line numbers appear exactly once.
 	2) SVM-MC where the \verb#-c# parameter is set to any of the best values found in (3a).
 	
 	What observation can be made on the result?
+
+
+	{\bf [Answers. 5 a)]} 
+	\begin{itemize}
+	    \item 
+	    	\begin{figure}[H]
+            	\centering
+            	\subfigure[CRF Character-wise accuracy]{
+        	    \includegraphics[width=7.5cm]{Figures/5-CRF-char-accuracy.png}}
+            	\subfigure[SVM-MC character-wise accuracy]{
+        		\includegraphics[width=7.5cm]{Figures/5-linear_SVM_char_acuracy.png}}
+                \caption{Comparison of CRF and SVM-MC character-wise accuracy}
+            	\label{fig:compare_optimizer}
+            \end{figure}
+	\end{itemize}
+	
+		{\bf [Observations:]}
+	
+	We tested the char-wise model by varying the distortion count from 50 to 2k. It can be observed that for all two graphs CRF, SVM-MM and SVM-MC, as the number of distortion count decreases, the model seems to perform bad on the training part and under-fits the data.
+	
 	
 	\item[(5b)] {\bf [5 Marks]}  Generate another plot for word-wise prediction accuracy on test data.  The \verb#-c# parameter in SVM-MC may adopt any of the best values found in (3b).
 	What observation can be made on the result?
+	
+	{\bf [Answers. 5 b)]} 
+	\begin{itemize}
+	    \item 
+	    	\begin{figure}[H]
+            	\centering
+            	\subfigure[CRF word-wise accuracy]{
+        	    \includegraphics[width=7.5cm]{Figures/5-crf-word-accuracy.png}}
+            	\subfigure[SVM-MC word-wise accuracy]{
+        		\includegraphics[width=7.5cm]{Figures/5-linear_svm_word_accuracy.png}}
+                \caption{Comparison of CRF and SVM-MC word-wise accuracy}
+            	\label{fig:compare_optimizer}
+            \end{figure}
+	\end{itemize}
+    
+    	
+	{\bf [Observations:]}
+	
+	We tested the word-wise model by varying the distortion count from 50 to 2k. It can be observed that for all two graphs CRF, SVM-MM and SVM-MC, as the number of distortion count decreases, the model seems to perform bad on the training part and under-fits the data.
+	
 	
 \end{itemize}
 
