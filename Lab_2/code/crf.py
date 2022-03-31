@@ -17,6 +17,7 @@ class CRF(nn.Module):
         self.batch_size = batch_size
         self.use_cuda = torch.cuda.is_available()
         self.conv_layer = Conv(5)
+        #self.conv_layer = Conv(3) #### UNCOMMENT FOR 4C
         self.params = nn.Parameter(torch.zeros(num_labels * embed_dim + num_labels**2))
 
         ### Use GPU if available
