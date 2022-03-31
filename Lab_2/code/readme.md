@@ -4,7 +4,7 @@ Team Members:
 Amrit Raj Vardhan
 Harsh Mishra
 Karan Jogi
-Manmohan Singh
+Manmohan Dogra
 Nikita Thakur
 
 Below is the structure of the code as per the assignment questions:
