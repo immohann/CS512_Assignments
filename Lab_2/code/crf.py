@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from crf_utils import *
+import crf_utils
 from conv import Conv
 
 
