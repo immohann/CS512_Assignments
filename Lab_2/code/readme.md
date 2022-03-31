@@ -1,10 +1,10 @@
 CS512 - Lab2:
 
 Team Members:
-Amrit Raj Vardhan
-Harsh Mishra
-Karan Jogi
-Manmohan Dogra
+Amrit Raj Vardhan,
+Harsh Mishra,
+Karan Jogi,
+Manmohan Dogra,
 Nikita Thakur
 
 Below is the structure of the code as per the assignment questions:
