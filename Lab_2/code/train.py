@@ -1,109 +1,182 @@
+import os
+import math
+import gzip
+import csv
+import time
 import torch
 import torch.optim as optim
 import torch.utils.data as data_utils
-from data_loader import get_dataset
+from sklearn.model_selection import train_test_split
+
+from tqdm import tqdm
+
+# import matplotlib.pyplot as plt
 import numpy as np
 from crf import CRF
 
+# import Data Loader
+from data_loader import get_dataset
 
-# Tunable parameters
-batch_size = 256
-num_epochs = 10
-max_iters  = 1000
-print_iter = 25 # Prints results every n iterations
-conv_shapes = [[1,64,128]] #
+if __name__ == '__main__':
+    # hyperparameters, dimensions and model parameters
+    dim = 128
+    epochs = 1
+    labels = 26
+    max_iter = 500
+    embed_dim = 128
+    batch_size = 64
+    conv_shapes = [[1, 64, 128]]
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # model and optimizer
+    model = CRF(dim, embed_dim, conv_shapes, labels, batch_size).to(device)
+    opt = optim.LBFGS(model.parameters(), lr=0.01)
+
+    dataset = get_dataset()
+
+    print(dataset.target.shape, dataset.data.shape)
+    # X_train, X_test, y_train, y_test = train_test_split(dataset.data, dataset.target, test_size=0.3, stratify=dataset.target)
+    split = int(0.7 * len(dataset.data))
+    X_train, X_test = dataset.data[:split], dataset.data[split:]
+    y_train, y_test = dataset.target[:split], dataset.target[split:]
+    # train_data = train_data.to(device)
+    # test_data = test_data.to(device)
+    # train_target = train_target.to(device)
+    # test_target = test_target.to(device)
+
+    train = data_utils.TensorDataset(torch.tensor(X_train).float(), torch.tensor(y_train).float())
+    test = data_utils.TensorDataset(torch.tensor(X_test).float(), torch.tensor(y_test).float())
+    # train = train.to(device)
+    # test = test.to(device)
+    # print(len(train[0][1][0]))
+    train_letter, test_letter, train_word, test_word = [], [], [], []
+
+    # Clear all log files
+    dir_name = "Q4"
+    files = os.listdir(dir_name)
+
+    for file in files:
+        if file.endswith(".txt"):
+            with open(os.path.join(dir_name, file), "r+") as f:
+                f.truncate(0)
+                f.close()
+
+    for i in range(epochs):
+        step = 1
+        print("\nEpoch {}".format(i + 1))
+        start_epoch = time.time()
+
+        train_data = data_utils.DataLoader(train, batch_size=batch_size, shuffle=True, sampler=None, num_workers=5,
+                                           pin_memory=True)
+        test_data = data_utils.DataLoader(test, batch_size=batch_size, shuffle=True, sampler=None, num_workers=5,
+                                          pin_memory=True)
+        train_mean_word_accuracy, test_mean_word_accuracy, train_mean_letter_accuracy, test_mean_letter_accuracy = 0, 0, 0, 0
+
+        for batch, sample in tqdm(enumerate(train_data)):
+            print("\nEpoch-{} Mini-Batch-{}".format(i + 1, batch))
+            start_t = time.time()
+            train_X = sample[0].to(device)
+            train_Y = sample[1].to(device)
 
 
-# Model parameters
-input_dim = 128
-embed_dim = 64
-num_labels = 26
-cuda = torch.cuda.is_available()
-
-# Instantiate the CRF model
-crf = CRF(input_dim, embed_dim, conv_shapes, num_labels, batch_size)
-
-# Setup the optimizer
-opt = optim.LBFGS(crf.parameters())
+            def compute_loss():
+                opt.zero_grad()
+                _loss = model.loss(train_X, train_Y)
+                _loss.backward()
+                return _loss
 
 
-##################################################
-# Begin training
-##################################################
-step = 0
+            start_step = time.time()
+            opt.step(compute_loss)
+            print("Epoch-{} Batch-{} Step-{} TIME ELAPSED = {}".format(i + 1, batch, step, time.time() - start_step))
+            for name, values in model.named_parameters():
+                if values.requires_grad:
+                    print("Parameters", name, values.data)
 
-# Fetch dataset
-dataset = get_dataset()
+            random_index = np.random.choice(X_test.shape[0], batch_size, replace=False)
+            test_X = X_test[random_index, :]
+            test_Y = y_test[random_index, :]
+            test_X = torch.from_numpy(test_X).float().to(device)
+            test_Y = torch.from_numpy(test_Y).long().to(device)
+            total_train_words = len(train_Y)
+            total_test_words = len(test_Y)
 
-split = int(0.5 * len(dataset.data)) # train-test split
-train_data, test_data = dataset.data[:split], dataset.data[split:]
-train_target, test_target = dataset.target[:split], dataset.target[split:]
+            total_train_letters = torch.sum(train_Y).item()
+            total_test_letters = torch.sum(test_Y).item()
 
-# Convert dataset into torch tensors
-train = data_utils.TensorDataset(torch.tensor(train_data).float(), torch.tensor(train_target).long())
-test = data_utils.TensorDataset(torch.tensor(test_data).float(), torch.tensor(test_target).long())
+            print("Getting Accuracy")
+            with torch.no_grad():
+                print("Training predictions-->")
+                train_predictions = model(train_X)
+                print("Test predictions-->")
+                test_predictions = model(test_X)
 
+            word_acc_train = 0
+            letter_acc_train = 0
 
-for i in range(num_epochs):
-    print("Processing epoch {}".format(i))
+            for y, y_preds in zip(train_Y, train_predictions):
+                letters = int(torch.sum(y).item())
+                if torch.all(torch.eq(y[:letters], y_preds[:letters])):
+                    word_acc_train = word_acc_train + 1
+                letter_acc_train = letter_acc_train + letters - (
+                            ((~torch.eq(y[:letters], y_preds[:letters])).sum()) / 2).item()
 
-    # Define train and test loaders
-    train_loader = data_utils.DataLoader(train,  # dataset to load from
-                                         batch_size=batch_size,  # examples per batch (default: 1)
-                                         shuffle=True,
-                                         sampler=None,  # if a sampling method is specified, `shuffle` must be False
-                                         num_workers=5,  # subprocesses to use for sampling
-                                         pin_memory=False,  # whether to return an item pinned to GPU
-                                         )
+            word_accuracy_test = 0
+            letter_accuracy_test = 0
 
-    test_loader = data_utils.DataLoader(test,  # dataset to load from
-                                        batch_size=batch_size,  # examples per batch (default: 1)
-                                        shuffle=False,
-                                        sampler=None,  # if a sampling method is specified, `shuffle` must be False
-                                        num_workers=5,  # subprocesses to use for sampling
-                                        pin_memory=False,  # whether to return an item pinned to GPU
-                                        )
-    print('Loaded dataset... ')
+            for y, y_preds in zip(test_Y, test_predictions):
+                letters = int(torch.sum(y).item())
+                if torch.all(torch.eq(y[:letters], y_preds[:letters])):
+                    word_accuracy_test = word_accuracy_test + 1
+                letter_accuracy_test = letter_accuracy_test + letters - (
+                            ((~torch.eq(y[:letters], y_preds[:letters])).sum()) / 2).item()
 
-    # Now start training
-    for i_batch, sample in enumerate(train_loader):
+            letter_acc_train /= total_train_letters
+            letter_accuracy_test /= total_test_letters
+            word_acc_train /= total_train_words
+            word_accuracy_test /= total_test_words
 
-        train_X = sample[0]
-        train_Y = sample[1]
+            ## collect accuracies for 100 steps
+            train_letter.append(letter_acc_train)
+            test_letter.append(letter_accuracy_test)
+            train_word.append(word_acc_train)
+            test_word.append(word_accuracy_test)
 
-        if cuda:
-            train_X = train_X.cuda()
-            train_Y = train_Y.cuda()
+            f_trainingepoc = open("Q4/wordwise_training.txt", "a")
+            f_trainingepoc.write(str(word_acc_train) + "\n")
+            f_trainingepoc.close()
 
-        # compute loss, grads, updates:
-        opt.zero_grad() # clear the gradients
-        tr_loss = crf.loss(train_X, train_Y) # Obtain the loss for the optimizer to minimize
-        tr_loss.backward() # Run backward pass and accumulate gradients
-        opt.step() # Perform optimization step (weight updates)
+            f_trainingepoc = open("Q4/letterwise_training.txt", "a")
+            f_trainingepoc.write(str(letter_acc_train) + "\n")
+            f_trainingepoc.close()
 
-        # print to stdout occasionally:
-        if step % print_iter == 0:
-            random_ixs = np.random.choice(test_data.shape[0], batch_size, replace=False)
-            test_X = test_data[random_ixs, :]
-            test_Y = test_target[random_ixs, :]
+            f_wtestingepoc = open("Q4/wordwise_testing.txt", "a")
+            f_wtestingepoc.write(str(word_accuracy_test) + "\n")
+            f_wtestingepoc.close()
 
-            # Convert to torch
-            test_X = torch.from_numpy(test_X).float()
-            test_Y = torch.from_numpy(test_Y).long()
+            f_testingepoc = open("Q4/letterwise_testing.txt", "a")
+            f_testingepoc.write(str(letter_accuracy_test) + "\n")
+            f_testingepoc.close()
 
-            if cuda:
-                test_X = test_X.cuda()
-                test_Y = test_Y.cuda()
-            test_loss = crf.loss(test_X, test_Y)
-            print(step, tr_loss.data, test_loss.data,
-                       tr_loss.data / batch_size, test_loss.data / batch_size)
+            print("\nTraining Accuracy ")
+            print("\tWord Acc = ", train_word)
+            print("\tLetter Acc = ", train_letter)
+            print(" Test Accuracy : ")
+            print("\tWord accuracy = ", test_word)
+            print("\tLetter accuracy = ", test_letter)
+            train_mean_word_accuracy = sum(train_word) / len(train_word)
+            test_mean_word_accuracy = sum(test_word) / len(test_word)
+            train_mean_letter_accuracy = sum(train_letter) / len(train_letter)
+            test_mean_letter_accuracy = sum(test_letter) / len(test_letter)
 
-			##################################################################
-			# IMPLEMENT WORD-WISE AND LETTER-WISE ACCURACY HERE
-			##################################################################
+            print(
+                "\n Train mean word accuracy = {}\n Test mean word accuracy = {}\n Train mean letter accuracy = {}\n Test mean letter accuracy = {}\n".format(
+                    train_mean_word_accuracy, test_mean_word_accuracy, train_mean_letter_accuracy,
+                    test_mean_letter_accuracy))
+            print("Epoch-{} Batch-{} Step-{} TIME TAKEN = {}".format(i, batch, step, time.time() - start_t))
+            step += 1
 
-            print(blah)
+            if step > max_iter: break
 
-        step += 1
-        if step > max_iters: raise StopIteration
-    del train, test
+        print("Epoch completed Epoch-{} Batch-{} Step-{} TIME ELAPSED = {}".format(i + 1, batch, step - 1,
+                                                                                   time.time() - start_epoch))
