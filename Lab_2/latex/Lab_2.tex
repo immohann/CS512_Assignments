@@ -6,6 +6,9 @@
 %\usepackage{cprotect}
 \usepackage{graphicx}
 \usepackage{subfigure}
+\usepackage{float}
+\usepackage{listings}
+
 
 \input{./Definitions}
 
@@ -15,13 +18,15 @@
 %\duedate{4 PM, March 28, 2022} % Change this
 
 % Fill in your name and email address
-\stuinfo{Your Name(s)}{NetID(s)@uic.edu}
+\stuinfo{Amrit Raj Vardhan }{avardh5@uic.edu}
+
 
 \graphicspath{{./}{./Figures/}}
 
 \begin{document}
 
 \maketitle
+Harsh Mishra (hmishr3@uic.edu), Amrit Raj Vardhan (avardh5@uic.edu), Karan Jogi (kjogi2@uic.edu), Manmohan Dogra (mdogra3@uic.edu), Nikita Thakur (nthaku3@uic.edu)
 
 {\bf Deadline: 4 PM, March 28, 2022}
 
@@ -310,6 +315,37 @@ Having the \verb#backward#() function implemented is an indication to PyTorch th
 Otherwise, if some layers do not have the \verb#backward# function explicitly implemented,
 then PyTorch will use autograd to compute the gradients.
 
+
+\item[\textbf{ [Answer] } ]{
+Convolution implementation Result:
+
+tensor([[[[2., 2., 3., 1., 1.],
+
+          [1., 4., 3., 4., 1.],
+
+          [1., 2., 4., 3., 3.],
+
+          [1., 2., 3., 4., 1.],
+
+          [0., 2., 2., 1., 1.]]]], device='cuda:0', grad\_fn=\<CopySlices\>)
+
+
+PyTorch implementation Result:
+
+tensor([[[[2., 2., 3., 1., 1.],
+
+          [1., 4., 3., 4., 1.],
+
+          [1., 2., 4., 3., 3.],
+
+          [1., 2., 3., 4., 1.],
+
+          [0., 2., 2., 1., 1.]]]])
+
+
+You can run \textbf{conv\_test.py} to see the result.
+}
+
 \end{itemize}
 
 \section{(50 points) CRF}
@@ -338,6 +374,11 @@ the provided starter code.
   all these are provided in the starter code (in the \texttt{crf.py} file). This
   question will be graded through the subsequent questions.
 
+\item[\textbf{ [Answer] } ]{
+We have implemented the \textbf{forward, backward} pass and \textbf{loss} in \textbf{crf.py}.
+}
+
+
 \item[(4b)] \textbf{(20 points)} Implement and display performance measures on
   the CRF model - we will use the same performance measures as the previous
   assignment (1) \textbf{letter-wise prediction accuracy}, (2) \textbf{word-wise
@@ -356,6 +397,32 @@ the provided starter code.
 {\bf Note.} You have to make sure that invalid letters do not add any value to your loss function. Moreover, while you are calculating the gradient, you have zero-out the gradients of invalid letters. You cannot just use the true labels to find valid letters because, in test time, the labels are not provided to the model. The solution was to use the input image and find valid images (any image with at least one non-zero pixel). You can use 'torch.any()' and 'torch.where()' for masking and filtering.
 
   
+\item[\textbf{ [Answer] } ]{
+Parameteric values used: 
+
+Batch size = 64
+
+Number of iterations = 100
+
+C = 1000 for CRF
+
+LBFGS lr = 0.001
+
+Padding = zero
+
+ 
+\item[\textbf{[Answer]} ]{
+Plots:
+            \begin{figure}[H]
+            	\centering
+            	\includegraphics[width=10cm]{latex/accuracies_4b.png}
+                \caption{Letter-wise and word-wise accuracies using LBFGS optimizer over train and test data. }
+            	\label{fig:compare_optimizer}
+            \end{figure}
+            }
+ 
+
+}
 
 \item [(4c)] {\bf (20 points)} It is common to use more than one convolution
   layer in modern deep learning models. Convolution layers typically capture
@@ -383,10 +450,50 @@ https://fomoro.com/projects/project/receptive-field-calculator
 
 {\bf Note.} Should we use Sequential to concatenate convolution layer and crf layer, or implement a CRF layer that entangles with a couple of convolution layers? Use Sequential. Pass a conv layer (it could be a stack of sequential conv layers) to CRF and use the \verb#get_conv_features#() method to get the features. This way, we are able to easily determine the valid letters from the input image as well. 
 
+\item[\textbf{[Answer]} ]{
+Experimented same as (4b). Following are the parametric values used:
+
+Stride = zero
+
+Padding = zero 
+
+batch size = 64
+
+Iteration = 100
+
+C = 1000 for CRF
+
+LBFGS learning rate = 0.001
+
+   \begin{figure}[H]
+            	\centering
+            	\includegraphics[width=10cm]{latex/accuracies_4c.png}
+                \caption{Letter-wise and word-wise accuracies using LBFGS optimizer over train and test data using CNN-CRF. }
+            	\label{fig:compare_optimizer}
+            \end{figure}
+          }
+ 
+ 
+ 
+
 
 \item [(4d)] {\bf (10 points)} Enable GPU in your implementation. Does it lead
   to significant speedup? You can test on the network in 4c. Make sure your plot
   uses wallclock time as the horizontal axis.
+  
+\item[\textbf{[Answer]} ]{
+Plot: 
+ \begin{figure}[H]
+            	\centering
+            	\includegraphics[width=10cm]{latex/cpu.jpeg}
+                \caption{CPU vs GPU performance comparison over time using CNN (4c)}
+            	\label{fig:compare_optimizer}
+            \end{figure}
+          
+From the experiment we observed that GPU performance was somewhat slower than CPU performance. The reason GPU is a bit slower is due to heavy computation requirement in the function dp\_infer() in crf\_utils.py. Another reason CPU is faster due to smaller model size, and data transfer rate. 
+}
+ 
+
 \end{itemize}
 
 \section{(30 points) Comparison with Deep Learning}
@@ -421,7 +528,13 @@ You will have to report the following in your report.
   layers inside it and its purpose for the task at hand. 
   That is, what functions (layers) were useful in the solution to the
   problem. In addition, look into the source code and sketch its structure
-  within 150 words.
+
+\item[\textbf{[Answer]} ]{
+    We used LeNet-5 architecture to compare the new CRF model, having a total of 5 layers. There are 2 Convonutional(Conv2D) layers, 2 Fully-connected layers, and 1 Softmax layer with 26 node output representing 26 labels. Since we've a small dimensional image 16x8 therefore we don't need a deeper network, a few layers should be enough. The Conv2D layer creates a convolution kernel of 3x3 that is winded with layers input size of 16x8 image which helps producing an output tensor to feed the following layers. The Conv2D layer is followed by the Max-pooling layer to calculates the largest value in each patch of feature map which captures the important pixel values of an image. Then we have Fully-connected layer to multiply the input by a weight matrix in addition to a bias vector required for training. At the end we use softmax activation function in the output layer as we want to predict a multinomial probability distribution of 26 labels. Below is the architecture of the model:
+\begin{lstlisting}
+
+\end{lstlisting}
+}
 
 %	You do not need to try out each of the four architectures to justify.
 %	You are free to use which ever model you think fits the task. We only ask for a justification on why you chose the model/architecture, based on the individual virtues. 
@@ -438,19 +551,75 @@ You will have to report the following in your report.
   
   \url{https://stats.stackexchange.com/questions/284712/how-does-the-l-bfgs-work}
   
-  
+ 
+\item[\textbf{[Answer]} ]{
+Parametric values for LBFGS optimization using LeNet: 
+
+batch\_size = 1200
+
+train-test split 50\%
+
+Gradient clipping : function clip\_grad\_value, clip\_value=3.0
+
+LBFGS with learning rate = 0.01
+
+
+Plots:
+            \begin{figure}[H]
+            	\centering
+            	\subfigure[LBFGS]{
+        	    \includegraphics[width=7.5cm]{latex/lbfgs.jpeg}}
+            	\subfigure[CNN-CRF]{
+        		\includegraphics[width=7.5cm]{latex/accuracies_4c.png}}
+                \caption{LBFGS vs CNN-CRF letter-wise and word-wise accuracies over test and train set }
+            	\label{fig:compare_optimizer}
+            \end{figure}
+    
+
+Using the above hyper-parameters it was observed that LBFGS outperformed the CNN-CRF model for both train and test data as it was able to converge faster and better compared to CNN-CRF. Tweaking hyper-parameters, and some regularizations didn’t smoothen the results
+enough. For letter-wise prediction, LBFGS performed with an accuracy of 84\% whereas, CRF was only able to achieve an accuracy of 67\%. 
+
+For LBFGS, we experimented with tweaking batch size to a large value and observed that a lot more data was required to train the model compared to the CRF model. It was observed that a batch size of 1200 was optimal. Another issue we faced during the training was getting NaN values while using LBFGS optimizer. To overcome this problem, we used Gradient-clipping. Results with different parameters can be seen in \textbf{LBFGS\_FILES} folder.
+}
+           
   
 \item[(5c)] {\bf (5 points)} Change the optimizer from {\em LBFGS} to {\em
     ADAM}. Repeat the experiments in (5b) and report the letter-wise and
   word-wise accuracies, with \(x\)-axis as the \#iterations. Does {\em ADAM} find
   a better solution eventually, and does it converge faster than {\em LBFGS}?
 
+\item[\textbf{[Answer]} ]{
+Plots:
+    \begin{figure}[H]
+            	\centering
+            	\subfigure[Adam optimizer]{
+        	    \includegraphics[width=7.5cm]{latex/adam.jpeg}}
+            	\subfigure[LBFGS optimizer]{
+        		\includegraphics[width=7.5cm]{latex/lbfgs.jpeg}}
+                \caption{Adam vs LBFGS letter-wise and word-wise accuracies over test and train set }
+            	\label{fig:compare_optimizer}
+            \end{figure}
+    
+           
+Comparing both the plots for letter-wise and word-wise accuracies using Adam optimizer and LBFGS optimizer, we observed that Adam tends to converge faster and finds a better solution faster compared to LBFGS. The reason LBFGS is a bit slower is due to its heavy second-order computation when the input size tends to increase. On the other hand  Adam is a first order method which converges faster. 
+            }
 
-\item[(5d)] \textbf{(10 points)} Why did you choose this model (again it could
+
+
+\item[(5d)] {\textbf{(10 points)} Why did you choose this model (again it could
   be your own design or an off-the-shelf model)? More precisely you should
   explain every design decision (use of batchnorm layer, dropout layer etc) and
-  how it helped in the task at hand, in your report.
+  how it helped in the task at hand, in your report.}
+
+\item[\textbf{ [Answer] } ]{
+Since we've a small dimensional image 16x8 therefore we don't need a deeper network, a few layers should be enough. The Conv2D layer creates a convolution kernel of 3x3 that is winded with layers input size of 16x8 image which helps producing an output tensor to feed the following layers. We kept the number of channels as 3 and applied padding according to it. We perform batch normalization to avoid covariate shift and speed up the training process. The Conv2D layer is followed by the Max-pooling layer to calculates the largest value in each patch of feature map which captures the important pixel values of an image. Then we have Fully-connected layer to multiply the input by a weight matrix in addition to a bias vector required for training. At the end we use softmax activation function in the output layer as we want to predict a multinomial probability distribution of 26 labels. 
+
+The main reason for choosing LeNet is that LeNet perform well with small sized inputs (16x8 in our case). 
+}
+
 \end{itemize}
+
+
 
 
 \bibliography{references} \bibliographystyle{plain}
