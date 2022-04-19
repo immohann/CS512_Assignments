@@ -7,6 +7,16 @@ Karan Jogi
 Manmohan Dogra
 Nikita Thakur
 
+**Hyperparameters:**
+batch size = 64
+hidden size = 50
+basic epoch = 100
+out channels = 12
+kernel size = 5
+stride = 2
+lr = 0.01
+weight decay = 0.0001
+
 
 **##Q2 - Training the Basic Model**
 
