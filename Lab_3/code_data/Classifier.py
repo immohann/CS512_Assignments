@@ -29,8 +29,8 @@ class LSTMClassifier(nn.Module):
 		self.dropout = nn.Dropout()
 		self.batch_norm = nn.BatchNorm1d(64)
 
-		self.h_t = torch.zeros(self.hidden_size, requires_grad= True)		# h_0
-		self.c_t = torch.zeros(self.hidden_size, requires_grad= True)		# c_0
+		self.ht = torch.zeros(self.hidden_size, requires_grad= True)		
+		self.ct = torch.zeros(self.hidden_size, requires_grad= True)		
 
 
 		
@@ -40,30 +40,28 @@ class LSTMClassifier(nn.Module):
 		# input now is of dimension: batch_size * sequence_length * input_size
 
 
-		'''need to be implemented'''
+		
 		if mode == 'plain':
 			norm_inp = F.normalize(input)
 			embed_inp = self.conv(norm_inp.permute(0,2,1)).permute(2,0,1)
-			self.lstm_input = self.relu(embed_inp)
-			self.h_t = torch.zeros(self.lstm_input.shape[1], self.hidden_size)		# h_0
-			self.c_t = torch.zeros(self.lstm_input.shape[1], self.hidden_size)		# c_0
-			for seq in self.lstm_input:
-				self.h_t, self.c_t = self.lstmcell(seq, (self.h_t, self.c_t))
-			result = self.linear(self.h_t)
+			self.inp_lstm = self.relu(embed_inp)
+			self.ht = torch.zeros(self.inp_lstm.shape[1], self.hidden_size)		
+			self.ct = torch.zeros(self.inp_lstm.shape[1], self.hidden_size)		
+			for seq in self.inp_lstm:
+				self.ht, self.ct = self.lstmcell(seq, (self.ht, self.ct))
+			result = self.linear(self.ht)
 				# chain up the layers
 
 		if mode == 'AdvLSTM':
 			norm_inp = F.normalize(input)
 			embed_inp = self.conv(norm_inp.permute(0,2,1)).permute(2,0,1)
-			self.lstm_input = self.relu(embed_inp) + (epsilon * r)
-			self.h_t = torch.zeros(self.lstm_input.shape[1], self.hidden_size)		# h_0
-			self.c_t = torch.zeros(self.lstm_input.shape[1], self.hidden_size)		# c_0
-			for seq in self.lstm_input :
-				self.h_t, self.c_t = self.lstmcell(seq, (self.h_t, self.c_t))
-			result = self.linear(self.h_t)
-				# chain up the layers
-			  # different from mode='plain', you need to add r to the forward pass
-			  # also make sure that the chain allows computing the gradient with respect to the input of LSTM
+			self.inp_lstm = self.relu(embed_inp) + (epsilon * r)
+			self.ht = torch.zeros(self.inp_lstm.shape[1], self.hidden_size)		
+			self.ct = torch.zeros(self.inp_lstm.shape[1], self.hidden_size)		
+			for seq in self.inp_lstm :
+				self.ht, self.ct = self.lstmcell(seq, (self.ht, self.ct))
+			result = self.linear(self.ht)
+
 
 		if mode == 'ProxLSTM':
 			prox = pro.ProximalLSTMCell.apply
@@ -72,29 +70,27 @@ class LSTMClassifier(nn.Module):
 			if self.apply_dropout:
 				norm_inp = self.dropout(norm_inp)
 			embed_inp = self.conv(norm_inp.permute(0,2,1)).permute(2,0,1)
-			self.lstm_input = self.relu(embed_inp)
+			self.inp_lstm = self.relu(embed_inp)
 			# Batch Norm layer
 			if self.apply_batch_norm:
-				self.lstm_input = self.batch_norm(self.lstm_input.permute(0, 2, 1))
-				self.lstm_input = self.lstm_input.permute(0, 2, 1)
-			self.h_t = torch.zeros(self.lstm_input.shape[1], self.hidden_size)		# h_0
-			self.c_t = torch.zeros(self.lstm_input.shape[1], self.hidden_size)		# c_0
-			for seq in self.lstm_input:
-				self.h_t, self.s_t = self.lstmcell(seq,(self.h_t, self.c_t))
-				self.G_t = torch.zeros(seq.shape[0], self.lstmcell.hidden_size, self.lstmcell.input_size)
-				for i in range(self.s_t.size(-1)):
-					g_t = ag.grad(self.s_t[:,i], seq, grad_outputs=torch.ones_like(self.s_t[:,0]), retain_graph=True)[0]
-					# print("g_t: ", g_t)
-					self.G_t[:,i,:] = g_t[0]
+				self.inp_lstm = self.batch_norm(self.inp_lstm.permute(0, 2, 1))
+				self.inp_lstm = self.inp_lstm.permute(0, 2, 1)
+			self.ht = torch.zeros(self.inp_lstm.shape[1], self.hidden_size)		
+			self.ct = torch.zeros(self.inp_lstm.shape[1], self.hidden_size)		
+			for seq in self.inp_lstm:
+				self.ht, self.st = self.lstmcell(seq,(self.ht, self.ct))
+				self.Gt = torch.zeros(seq.shape[0], self.lstmcell.hidden_size, self.lstmcell.input_size)
+				for i in range(self.st.size(-1)):
+					gt = ag.grad(self.st[:,i], seq, grad_outputs=torch.ones_like(self.st[:,0]), retain_graph=True)[0]
+					self.Gt[:,i,:] = gt[0]
 					
-				# print("G_t.shape", self.G_t.shape)
-				self.h_t, self.c_t = prox(self.h_t, self.s_t, self.G_t, prox_epsilon)
-			result = self.linear(self.h_t)
+				self.ht, self.ct = prox(self.ht, self.st, self.Gt, prox_epsilon)
+			result = self.linear(self.ht)
 		
 		return result
 				# chain up layers, but use ProximalLSTMCell here
 
 
 
-	def get_lstm_input(self):
-		return self.lstm_input
+	def get_inp_lstm(self):
+		return self.inp_lstm
